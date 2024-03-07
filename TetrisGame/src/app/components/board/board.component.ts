@@ -18,8 +18,10 @@ export class BoardComponent implements OnInit {
   PLAYER_PIECE = {
     position: { x: 5, y: 5 },
     shape: PIECES
-
   }
+
+  dropCounter = 0;
+  lastTime = 0
 
 
   BOARD = [
@@ -52,7 +54,7 @@ export class BoardComponent implements OnInit {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1],
   ]
 
   ngOnInit(): void {
@@ -76,10 +78,32 @@ export class BoardComponent implements OnInit {
     this.context?.scale(this.BLOCK_SIZE, this.BLOCK_SIZE);
   }
 
-  update(): void {
+  update(time = 0): void {
+    const DELTA_TIME = time - this.lastTime;
+    this.lastTime = time;
+
+    this.dropCounter += DELTA_TIME;
+    //console.log(this.dropCounter)
+    //console.log('counter', this.dropCounter > 100)
+
+    if (this.dropCounter > 1000) {
+      console.log('dropCounter if')
+      this.PLAYER_PIECE.position.y++
+      this.dropCounter = 0
+    };
+
+    // if (this.checkCollision()) {
+    //   this.PLAYER_PIECE.position.y--
+    //   this.solidifyPiece()
+    //   this.removeRows()
+    // }
+    
     window.requestAnimationFrame(()=>{
+      console.log('entra')
+      //console.log('counter', this.dropCounter > 100)
+
       this.draw();
-     this.update();
+      this.update();
     });
   }
 
@@ -90,7 +114,7 @@ export class BoardComponent implements OnInit {
     this.BOARD.forEach((row, y) => {
       row.forEach((value, x) => {
         if (value === 1) {
-          this.context!.fillStyle = '#888';
+          this.context!.fillStyle = '#6b0103';
           this.context?.fillRect(x, y, 1, 1);
         }
       })
@@ -99,7 +123,7 @@ export class BoardComponent implements OnInit {
     this.PLAYER_PIECE.shape.forEach((row, y) => {
       row.forEach((value, x) => {
         if (value === 1) {
-          this.context!.fillStyle = 'red';
+          this.context!.fillStyle = '#cd9b9b';
           this.context?.fillRect(x + this.PLAYER_PIECE.position.x, y + this.PLAYER_PIECE.position.y, 1, 1);
         }
       })
@@ -107,12 +131,65 @@ export class BoardComponent implements OnInit {
   }
 
   movePiece( event:KeyboardEvent): void {
-    if (event.key === 'ArrowLeft') this.PLAYER_PIECE.position.x--
-    if (event.key === 'ArrowRight') this.PLAYER_PIECE.position.x++
-    if (event.key === 'ArrowDown') this.PLAYER_PIECE.position.y++
+    if (event.key === 'ArrowLeft') {
+      this.PLAYER_PIECE.position.x--
+      if (this.checkCollision()) {
+        this.PLAYER_PIECE.position.x++
+      }
+    }
+    if (event.key === 'ArrowRight') {
+      this.PLAYER_PIECE.position.x++
+      if (this.checkCollision()){
+        this.PLAYER_PIECE.position.x--
+      }
+    } 
+    if (event.key === 'ArrowDown') {
+      this.PLAYER_PIECE.position.y++
+      if (this.checkCollision()){
+        this.PLAYER_PIECE.position.y--
+        this.solidifyPiece()
+        this.removeRows()
+      }
+    } 
+  }
+
+  checkCollision (): number[] | undefined {
+    return this.PLAYER_PIECE.shape.find((row, y) => {
+      return row.find((value, x) => {
+        return (
+          value != 0 && 
+          this.BOARD[y + this.PLAYER_PIECE.position.y]?.[x + this.PLAYER_PIECE.position.x] != 0
+        )
+      })
+    })
+  }
+
+  solidifyPiece(): void {
+    this.PLAYER_PIECE.shape.forEach((row, x) => {
+      row.forEach((value, y) => {
+        if (value ==1){
+          this.BOARD[y + this.PLAYER_PIECE.position.y][x + this.PLAYER_PIECE.position.x] = 1
+        }
+      })
+    });
+    this.PLAYER_PIECE.position.x = 0;
+    this.PLAYER_PIECE.position.y = 0;
   }
 
 
+  removeRows(): void {
+    const rowsToRemove: number[] = [];
+    this.BOARD.forEach((row, y) => {
+      if (row.every(value => value == 1)) {
+        rowsToRemove.push(y)
+      }
+    });
 
+    rowsToRemove.forEach(y => {
+      this.BOARD.splice(y, 1)
+      const newRow = Array(this.BOARD_WIDHT).fill(0)
+      this.BOARD.unshift(newRow)
+    })
+  }
 
 }
