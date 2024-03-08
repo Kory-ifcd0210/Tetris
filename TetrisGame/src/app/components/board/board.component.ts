@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { PIECES } from '../../const/pieces';
+import { Timestamp, timestamp } from 'rxjs';
 
 
 @Component({
@@ -84,7 +85,8 @@ export class BoardComponent implements OnInit {
 
     this.dropCounter += DELTA_TIME;
     //console.log(this.dropCounter)
-    //console.log('counter', this.dropCounter > 100)
+    // console.log('counter', this.dropCounter > 1000)
+    console.log(DELTA_TIME)
 
     if (this.dropCounter > 1000) {
       console.log('dropCounter if')
@@ -92,18 +94,16 @@ export class BoardComponent implements OnInit {
       this.dropCounter = 0
     };
 
-    // if (this.checkCollision()) {
-    //   this.PLAYER_PIECE.position.y--
-    //   this.solidifyPiece()
-    //   this.removeRows()
-    // }
+    if (this.checkCollision()) {
+      this.PLAYER_PIECE.position.y--
+      this.solidifyPiece()
+      this.removeRows()
+    }
     
-    window.requestAnimationFrame(()=>{
-      console.log('entra')
-      //console.log('counter', this.dropCounter > 100)
+    window.requestAnimationFrame((timestamp)=>{
 
       this.draw();
-      this.update();
+      this.update(timestamp);
     });
   }
 
