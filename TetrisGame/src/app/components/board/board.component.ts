@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PIECES } from '../../const/pieces';
-import { Timestamp, timestamp } from 'rxjs';
+import { PIECES, PIECES_COLOR } from '../../const/pieces';
 
 
 @Component({
@@ -21,12 +20,8 @@ export class BoardComponent implements OnInit {
   context: CanvasRenderingContext2D | null | undefined;
   PLAYER_PIECE = {
     position: { x: 5, y: 5 },
-    //shape: PIECES
-    shape: [
-      [1,1],
-      [1,1]
-    ]
-  };
+    shape: PIECES[Math.floor(Math.random() * PIECES.length)]
+  }
 
   dropCounter = 0;
   lastTime = 0;
@@ -73,10 +68,10 @@ export class BoardComponent implements OnInit {
 
     this.dropCounter += DELTA_TIME;
 
-    if (this.dropCounter > 1000) {
+    if (this.dropCounter > 500) {
       this.PLAYER_PIECE.position.y++;
       this.dropCounter = 0;
-    };
+    }
 
     if (this.checkCollision()) {
       this.PLAYER_PIECE.position.y--;
@@ -87,13 +82,13 @@ export class BoardComponent implements OnInit {
     window.requestAnimationFrame((timestamp)=>{
       this.draw();
       this.update(timestamp);
-    });
+    })
   }
 
   draw(): void {
     this.context!.fillStyle = '#000';
     this.context?.fillRect(0, 0, this.canvas!.width, this.canvas!.height);
-
+    
     this.BOARD.forEach((row, y) => {
       row.forEach((value: number, x: number) => {
         if (value === 1) {
@@ -101,16 +96,17 @@ export class BoardComponent implements OnInit {
           this.context?.fillRect(x, y, 1, 1);
         }
       })
-    });
+    })
 
     this.PLAYER_PIECE.shape.forEach((row, y) => {
       row.forEach((value, x) => {
         if (value === 1) {
-          this.context!.fillStyle = '#cd9b9b';
+          const COLOR_INDEX = PIECES.indexOf(this.PLAYER_PIECE.shape)
+          this.context!.fillStyle = PIECES_COLOR[COLOR_INDEX];
           this.context?.fillRect(x + this.PLAYER_PIECE.position.x, y + this.PLAYER_PIECE.position.y, 1, 1);
         }
       })
-    });
+    })
   }
 
   movePiece( event:KeyboardEvent): void {
@@ -119,13 +115,15 @@ export class BoardComponent implements OnInit {
       if (this.checkCollision()) {
         this.PLAYER_PIECE.position.x++;
       }
-    };
+    }
+
     if (event.key === 'ArrowRight') {
       this.PLAYER_PIECE.position.x++;
       if (this.checkCollision()){
         this.PLAYER_PIECE.position.x--;
       }
-    };
+    }
+
     if (event.key === 'ArrowDown') {
       this.PLAYER_PIECE.position.y++;
       if (this.checkCollision()){
@@ -133,7 +131,8 @@ export class BoardComponent implements OnInit {
         this.solidifyPiece();
         this.removeRows();
       }
-    };
+    }
+
     if (event.key === 'ArrowUp') {
       const ROTATED = [];
       for (let i = 0; i < this.PLAYER_PIECE.shape[0].length; i++) {
@@ -141,17 +140,16 @@ export class BoardComponent implements OnInit {
         for (let j = this.PLAYER_PIECE.shape.length - 1; j >= 0; j--) {
           ROW.push(this.PLAYER_PIECE.shape[j][i]);
         }
-
         ROTATED.push(ROW);
-      };
+      }
 
       const PERVIOUS_SHAPE = this.PLAYER_PIECE.shape;
       this.PLAYER_PIECE.shape = ROTATED;
       if (this.checkCollision()) {
         this.PLAYER_PIECE.shape = PERVIOUS_SHAPE;
       }
-    };
-  };
+    }
+  }
 
   checkCollision (): number[] | undefined {
     return this.PLAYER_PIECE.shape.find((row, y) => {
@@ -167,13 +165,14 @@ export class BoardComponent implements OnInit {
   solidifyPiece(): void {
     this.PLAYER_PIECE.shape.forEach((row, y) => {
       row.forEach((value, x) => {
-        if (value ==1){
+        if (value === 1){
           this.BOARD[y + this.PLAYER_PIECE.position.y][x + this.PLAYER_PIECE.position.x] = 1;
         }
       })
-    });
+    })
     
-    this.PLAYER_PIECE.position.x = Math.floor(this.BOARD_WIDHT / 2 - 2);
+    const randomX = Math.floor(Math.random() * (this.BOARD_WIDHT - this.PLAYER_PIECE.shape[0].length - 2)) + 1;
+    this.PLAYER_PIECE.position.x = randomX;
     this.PLAYER_PIECE.position.y = 0;
 
     this.PLAYER_PIECE.shape = PIECES[Math.floor(Math.random() * PIECES.length)];
@@ -182,24 +181,27 @@ export class BoardComponent implements OnInit {
       window.alert('Game Over!!');
       this.BOARD.forEach((row) => row.fill(0));
     }
-
   }
-
 
   removeRows(): void {
     const rowsToRemove: number[] = [];
     this.BOARD.forEach((row, y) => {
-      if (row.every((value: number) => value == 1)) {
+      if (row.every((value: number) => value === 1)) {
         rowsToRemove.push(y);
       }
-    });
-
-    rowsToRemove.forEach(y => {
-      this.BOARD.splice(y, 1);
-      const newRow = Array(this.BOARD_WIDHT).fill(0);
-      this.BOARD.unshift(newRow);
-      this.score += 10;
     })
+
+    const rowsRemoved = rowsToRemove.length;
+    if (rowsRemoved > 0) {
+        const scoreIncrease = 10 * (2 ** (rowsRemoved - 1));
+        this.score += scoreIncrease;
+
+        rowsToRemove.forEach(y => {
+            this.BOARD.splice(y, 1);
+            const newRow = Array.from({ length: this.BOARD_WIDHT }, () => 0);
+            this.BOARD.unshift(newRow);
+        });
+    }
   }
 
 }

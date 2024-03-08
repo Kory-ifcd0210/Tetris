@@ -29,3 +29,14 @@ export const PIECES = [
       [1,1]
     ]
   ]
+
+
+export const PIECES_COLOR = [
+  '#94DFB1',
+  '#94DFD6',
+  '#94C2DF',
+  '#949DDF',
+  '#FD91B9',
+  '#FDF191',
+  '#FDBB91'
+]
