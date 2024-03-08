@@ -14,49 +14,37 @@ export class BoardComponent implements OnInit {
   BLOCK_SIZE = 20;
   BOARD_WIDHT = 14;
   BOARD_HEIGHT = 30;
+
+  score: number = 0;
+
   canvas!: HTMLCanvasElement | null;
   context: CanvasRenderingContext2D | null | undefined;
   PLAYER_PIECE = {
     position: { x: 5, y: 5 },
-    shape: PIECES
-  }
+    //shape: PIECES
+    shape: [
+      [1,1],
+      [1,1]
+    ]
+  };
 
   dropCounter = 0;
-  lastTime = 0
+  lastTime = 0;
 
+  BOARD = this.createBoard(this.BOARD_WIDHT, this.BOARD_HEIGHT);
 
-  BOARD = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],    
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],    
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1],
-  ]
+  createBoard(width: number, height: number) {
+    const board = [];
+
+    for (let i = 0; i < height; i++) {
+        const row = [];
+        for (let j = 0; j < width; j++) {
+            row.push(0);
+        }
+        board.push(row);
+    }
+    return board;
+  }
 
   ngOnInit(): void {
     this.initialization();
@@ -84,24 +72,19 @@ export class BoardComponent implements OnInit {
     this.lastTime = time;
 
     this.dropCounter += DELTA_TIME;
-    //console.log(this.dropCounter)
-    // console.log('counter', this.dropCounter > 1000)
-    console.log(DELTA_TIME)
 
     if (this.dropCounter > 1000) {
-      console.log('dropCounter if')
-      this.PLAYER_PIECE.position.y++
-      this.dropCounter = 0
+      this.PLAYER_PIECE.position.y++;
+      this.dropCounter = 0;
     };
 
     if (this.checkCollision()) {
-      this.PLAYER_PIECE.position.y--
-      this.solidifyPiece()
-      this.removeRows()
+      this.PLAYER_PIECE.position.y--;
+      this.solidifyPiece();
+      this.removeRows();
     }
     
     window.requestAnimationFrame((timestamp)=>{
-
       this.draw();
       this.update(timestamp);
     });
@@ -112,7 +95,7 @@ export class BoardComponent implements OnInit {
     this.context?.fillRect(0, 0, this.canvas!.width, this.canvas!.height);
 
     this.BOARD.forEach((row, y) => {
-      row.forEach((value, x) => {
+      row.forEach((value: number, x: number) => {
         if (value === 1) {
           this.context!.fillStyle = '#6b0103';
           this.context?.fillRect(x, y, 1, 1);
@@ -132,26 +115,43 @@ export class BoardComponent implements OnInit {
 
   movePiece( event:KeyboardEvent): void {
     if (event.key === 'ArrowLeft') {
-      this.PLAYER_PIECE.position.x--
+      this.PLAYER_PIECE.position.x--;
       if (this.checkCollision()) {
-        this.PLAYER_PIECE.position.x++
+        this.PLAYER_PIECE.position.x++;
       }
-    }
+    };
     if (event.key === 'ArrowRight') {
-      this.PLAYER_PIECE.position.x++
+      this.PLAYER_PIECE.position.x++;
       if (this.checkCollision()){
-        this.PLAYER_PIECE.position.x--
+        this.PLAYER_PIECE.position.x--;
       }
-    } 
+    };
     if (event.key === 'ArrowDown') {
-      this.PLAYER_PIECE.position.y++
+      this.PLAYER_PIECE.position.y++;
       if (this.checkCollision()){
-        this.PLAYER_PIECE.position.y--
-        this.solidifyPiece()
-        this.removeRows()
+        this.PLAYER_PIECE.position.y--;
+        this.solidifyPiece();
+        this.removeRows();
       }
-    } 
-  }
+    };
+    if (event.key === 'ArrowUp') {
+      const ROTATED = [];
+      for (let i = 0; i < this.PLAYER_PIECE.shape[0].length; i++) {
+        const ROW = [];
+        for (let j = this.PLAYER_PIECE.shape.length - 1; j >= 0; j--) {
+          ROW.push(this.PLAYER_PIECE.shape[j][i]);
+        }
+
+        ROTATED.push(ROW);
+      };
+
+      const PERVIOUS_SHAPE = this.PLAYER_PIECE.shape;
+      this.PLAYER_PIECE.shape = ROTATED;
+      if (this.checkCollision()) {
+        this.PLAYER_PIECE.shape = PERVIOUS_SHAPE;
+      }
+    };
+  };
 
   checkCollision (): number[] | undefined {
     return this.PLAYER_PIECE.shape.find((row, y) => {
@@ -165,30 +165,40 @@ export class BoardComponent implements OnInit {
   }
 
   solidifyPiece(): void {
-    this.PLAYER_PIECE.shape.forEach((row, x) => {
-      row.forEach((value, y) => {
+    this.PLAYER_PIECE.shape.forEach((row, y) => {
+      row.forEach((value, x) => {
         if (value ==1){
-          this.BOARD[y + this.PLAYER_PIECE.position.y][x + this.PLAYER_PIECE.position.x] = 1
+          this.BOARD[y + this.PLAYER_PIECE.position.y][x + this.PLAYER_PIECE.position.x] = 1;
         }
       })
     });
-    this.PLAYER_PIECE.position.x = 0;
+    
+    this.PLAYER_PIECE.position.x = Math.floor(this.BOARD_WIDHT / 2 - 2);
     this.PLAYER_PIECE.position.y = 0;
+
+    this.PLAYER_PIECE.shape = PIECES[Math.floor(Math.random() * PIECES.length)];
+
+    if (this.checkCollision()){
+      window.alert('Game Over!!');
+      this.BOARD.forEach((row) => row.fill(0));
+    }
+
   }
 
 
   removeRows(): void {
     const rowsToRemove: number[] = [];
     this.BOARD.forEach((row, y) => {
-      if (row.every(value => value == 1)) {
-        rowsToRemove.push(y)
+      if (row.every((value: number) => value == 1)) {
+        rowsToRemove.push(y);
       }
     });
 
     rowsToRemove.forEach(y => {
-      this.BOARD.splice(y, 1)
-      const newRow = Array(this.BOARD_WIDHT).fill(0)
-      this.BOARD.unshift(newRow)
+      this.BOARD.splice(y, 1);
+      const newRow = Array(this.BOARD_WIDHT).fill(0);
+      this.BOARD.unshift(newRow);
+      this.score += 10;
     })
   }
 
